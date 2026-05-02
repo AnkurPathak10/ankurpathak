@@ -1,8 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap");
 @import "tailwindcss";
 
+/*
+  Theme toggler (later): add class `dark` or `light` on <html> to override system preference.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --background: #f5f5f5;
+  --foreground: #0a0a0a;
+  --font-geist-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, monospace;
+
+  /* Light mode: dark grid lines on light ground (clearly visible) */
+  --hero-bg: #f5f5f5;
+  --grid-line: rgba(0, 0, 0, 0.14);
+  --grid-size: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+    --background: #000000;
+    --foreground: #f5f5f5;
+    --hero-bg: #000000;
+    /* Dark mode: light grey grid on black (readable without dominating) */
+    --grid-line: rgba(255, 255, 255, 0.14);
+  }
+}
+
+html.dark {
+  color-scheme: dark;
+  --background: #000000;
+  --foreground: #f5f5f5;
+  --hero-bg: #000000;
+  --grid-line: rgba(255, 255, 255, 0.14);
+}
+
+html.light {
+  color-scheme: light;
+  --background: #f5f5f5;
+  --foreground: #0a0a0a;
+  --hero-bg: #f5f5f5;
+  --grid-line: rgba(0, 0, 0, 0.14);
 }
 
 @theme inline {
@@ -12,15 +51,20 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Small graph-paper grid */
+.hero-surface {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--hero-bg);
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: 0 0;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans);
 }
