@@ -11,5 +11,7 @@ export const siteConfig = {
     "Portfolio of Ankur — developer and designer focused on digital products, interfaces, and brands.",
   tagline:
     "Developer & designer — building digital products, interfaces, and brands.",
+  /** Pill navbar (uppercase strip) */
+  navTagline: "DESIGNING AND DEVELOPING DIGITAL PRODUCTS",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
 } as const;

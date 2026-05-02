@@ -1,11 +1,13 @@
 import Image from "next/image";
 import { siteConfig } from "@/lib/site-config";
+import { HeroNavbar } from "@/components/hero/HeroNavbar";
 
 const MARQUEE_VISUAL = "ANKUR PATHAK";
 
 export function Hero() {
   return (
     <div className="hero-surface relative isolate min-h-screen w-full overflow-x-hidden">
+      <HeroNavbar />
       <h1 className="sr-only">Ankur Pathak</h1>
 
       <div className="hero-marquee-clip select-none" aria-hidden>

@@ -54,13 +54,22 @@ export const viewport: Viewport = {
   ],
 };
 
+const themeInitScript = `(function(){try{var r=document.documentElement,t=localStorage.getItem("theme");if(t==="dark"){r.classList.add("dark");r.classList.remove("light");}else if(t==="light"){r.classList.add("light");r.classList.remove("dark");}else{r.classList.remove("light");if(window.matchMedia("(prefers-color-scheme: dark)").matches){r.classList.add("dark");}else{r.classList.remove("dark");}}}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased", "font-sans", notoSans.variable, playfairDisplayHeading.variable)}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn("h-full antialiased", "font-sans", notoSans.variable, playfairDisplayHeading.variable)}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="flex min-h-full flex-col bg-background font-['MAK',sans-serif] text-foreground antialiased">
         <script
           type="application/ld+json"

@@ -238,6 +238,8 @@ body {
 */
 
 .dark {
+  --hero-bg: #000000;
+  --grid-line: rgba(255, 255, 255, 0.14);
   --background: oklch(0.147 0.004 49.3);
   --foreground: oklch(0.986 0.002 67.8);
   --card: oklch(0.214 0.009 43.1);

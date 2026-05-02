@@ -6,6 +6,27 @@ import { flushSync } from "react-dom"
 
 import { cn } from "@/lib/utils"
 
+/** True when UI should use dark palette (explicit class or system when unset). */
+function getResolvedThemeIsDark(): boolean {
+  if (typeof document === "undefined") return false
+  const root = document.documentElement
+  if (root.classList.contains("dark")) return true
+  if (root.classList.contains("light")) return false
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+}
+
+function applyExplicitTheme(nextDark: boolean) {
+  const root = document.documentElement
+  if (nextDark) {
+    root.classList.remove("light")
+    root.classList.add("dark")
+  } else {
+    root.classList.remove("dark")
+    root.classList.add("light")
+  }
+  localStorage.setItem("theme", nextDark ? "dark" : "light")
+}
+
 export type TransitionVariant =
   | "circle"
   | "square"
@@ -139,7 +160,7 @@ export const AnimatedThemeToggler = ({
 
   useEffect(() => {
     const updateTheme = () => {
-      setIsDark(document.documentElement.classList.contains("dark"))
+      setIsDark(getResolvedThemeIsDark())
     }
 
     updateTheme()
@@ -177,10 +198,9 @@ export const AnimatedThemeToggler = ({
     )
 
     const applyTheme = () => {
-      const newTheme = !isDark
-      setIsDark(newTheme)
-      document.documentElement.classList.toggle("dark")
-      localStorage.setItem("theme", newTheme ? "dark" : "light")
+      const nextDark = !getResolvedThemeIsDark()
+      applyExplicitTheme(nextDark)
+      setIsDark(nextDark)
     }
 
     if (typeof document.startViewTransition !== "function") {
@@ -233,7 +253,7 @@ export const AnimatedThemeToggler = ({
         )
       })
     }
-  }, [shape, fromCenter, duration, isDark])
+  }, [shape, fromCenter, duration])
 
   return (
     <button
