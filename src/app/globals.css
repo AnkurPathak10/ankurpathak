@@ -1,6 +1,22 @@
 @import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap");
 @import "tailwindcss";
 
+@font-face {
+  font-family: "MAK";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/fonts/MAK.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "MAK";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("/fonts/MAK-bold.otf") format("opentype");
+}
+
 /*
   Theme toggler (later): add class `dark` or `light` on <html> to override system preference.
 */
@@ -10,6 +26,13 @@
   --foreground: #0a0a0a;
   --font-geist-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-geist-mono: "Geist Mono", ui-monospace, monospace;
+
+  /* Marquee band height — align with your pink reference (face / name strip) */
+  --hero-marquee-band: 45vh;
+  /* How far below true viewport center the marquee line should sit */
+  --hero-marquee-shift-down: 6vh;
+  /* Marquee horizontal scroll duration (lower = faster) */
+  --hero-marquee-duration: 20s;
 
   /* Light mode: dark grid lines on light ground (clearly visible) */
   --hero-bg: #f5f5f5;
@@ -66,5 +89,75 @@ html.light {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans);
+  font-family: "MAK", sans-serif !important;
+}
+
+/* Behind avatar (z-[5]). padding-top moves flex vertical center down (fix: shell used deleted --hero-marquee-nudge-y). */
+/* Clip must have a definite min block size; 100% fails when only absolute children fill the hero. */
+.hero-marquee-clip {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: visible;
+  z-index: 5;
+  pointer-events: none;
+  /* flex cross-center lands at 50vh + --hero-marquee-shift-down */
+  padding-top: calc(var(--hero-marquee-shift-down) * 2);
+}
+
+.hero-marquee-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: auto;
+  width: max-content;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.hero-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: hero-marquee var(--hero-marquee-duration, 20s) linear infinite;
+}
+
+.hero-marquee-shell .hero-marquee-item {
+  flex-shrink: 0;
+  padding-inline: clamp(1.5rem, 4vw, 3.5rem);
+  font-family: "MAK", sans-serif !important;
+  font-weight: 700; /* use bold for the marquee */
+  font-synthesis: none;
+  /*
+    Caps-only: scale em so cap-height roughly fills the pink band.
+    Hero root allows vertical overflow so glyphs aren’t clipped.
+  */
+  font-size: max(
+    5rem,
+    min(calc(var(--hero-marquee-band) * 1.2), 88vmin)
+  ) !important;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  opacity: 0.94;
+  white-space: nowrap;
+}
+
+@keyframes hero-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-marquee-track {
+    animation: none;
+  }
 }
