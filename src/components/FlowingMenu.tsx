@@ -1,7 +1,82 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from 'react';
-import { gsap } from 'gsap';
+import React, { useRef, useEffect, useState, useMemo } from "react";
+import { motion, type Variants } from "framer-motion";
+import { gsap } from "gsap";
+
+import { cn } from "@/lib/utils";
+
+/** Uniform delay between row starts (open: top→bottom; close: bottom→top). */
+export const FLOWING_MENU_ROW_STAGGER_SEC = 0.2;
+
+const EASE_SMOOTH = [0.16, 1, 0.3, 1] as const;
+const ROW_ENTER_DURATION = 0.55;
+const ROW_EXIT_DURATION = 0.48;
+
+export const FLOWING_MENU_ROW_EXIT_DURATION_SEC = ROW_EXIT_DURATION;
+
+/** Total time until the last row finishes exiting (stagger + row tween). */
+export function flowingMenuTotalExitDurationSec(itemCount: number): number {
+  if (itemCount <= 0) return ROW_EXIT_DURATION;
+  return (
+    (itemCount - 1) * FLOWING_MENU_ROW_STAGGER_SEC + ROW_EXIT_DURATION
+  );
+}
+
+function createRowVariants(itemCount: number): Variants {
+  const last = Math.max(0, itemCount - 1);
+  return {
+    hidden: {
+      x: "120%",
+      opacity: 0,
+    },
+    show: (i: number) => ({
+      x: 0,
+      opacity: 1,
+      transition: {
+        x: {
+          type: "tween",
+          duration: ROW_ENTER_DURATION,
+          ease: EASE_SMOOTH,
+          delay: i * FLOWING_MENU_ROW_STAGGER_SEC,
+        },
+        opacity: {
+          duration: 0.38,
+          ease: "easeOut",
+          delay: i * FLOWING_MENU_ROW_STAGGER_SEC,
+        },
+      },
+    }),
+    exit: (i: number) => ({
+      x: "120%",
+      opacity: 0,
+      transition: {
+        x: {
+          type: "tween",
+          duration: ROW_EXIT_DURATION,
+          ease: EASE_SMOOTH,
+          delay: (last - i) * FLOWING_MENU_ROW_STAGGER_SEC,
+        },
+        opacity: {
+          duration: 0.32,
+          ease: "easeOut",
+          delay: (last - i) * FLOWING_MENU_ROW_STAGGER_SEC,
+        },
+      },
+    }),
+  };
+}
+
+/** Wait for row `motion.div` exit animations before this nav node reports exit complete. */
+const navVariants: Variants = {
+  hidden: {},
+  show: {},
+  exit: {
+    transition: {
+      when: "afterChildren",
+    },
+  },
+};
 
 interface MenuItemData {
   link: string;
@@ -17,47 +92,86 @@ interface FlowingMenuProps {
   marqueeBgColor?: string;
   marqueeTextColor?: string;
   borderColor?: string;
+  className?: string;
+  /** Called after a menu link is activated (e.g. close the overlay). */
+  onNavigate?: () => void;
 }
 
-interface MenuItemProps extends MenuItemData {
+interface RowInnerProps extends MenuItemData {
   speed: number;
   textColor: string;
   marqueeBgColor: string;
   marqueeTextColor: string;
   borderColor: string;
   isFirst: boolean;
+  onNavigate?: () => void;
+  /** Mutable list of row roots; same index as this row’s `motion.div`. */
+  rowRootsRef: React.MutableRefObject<(HTMLDivElement | null)[]>;
+  rowIndex: number;
 }
 
 const FlowingMenu: React.FC<FlowingMenuProps> = ({
   items = [],
   speed = 15,
-  textColor = '#fff',
-  bgColor = '#120F17',
-  marqueeBgColor = '#fff',
-  marqueeTextColor = '#120F17',
-  borderColor = '#fff'
+  textColor = "#fff",
+  bgColor = "#120F17",
+  marqueeBgColor = "#fff",
+  marqueeTextColor = "#120F17",
+  borderColor = "#fff",
+  className,
+  onNavigate,
 }) => {
+  const rowVariants = useMemo(() => createRowVariants(items.length), [items.length]);
+  const rowRootsRef = useRef<(HTMLDivElement | null)[]>([]);
+  rowRootsRef.current.length = items.length;
+
   return (
-    <div className="w-full h-full overflow-hidden" style={{ backgroundColor: bgColor }}>
-      <nav className="flex flex-col h-full m-0 p-0">
+    <div className={cn("h-full w-full overflow-hidden bg-transparent", className)}>
+      <motion.nav
+        className="m-0 flex h-full flex-col p-0"
+        variants={navVariants}
+        initial="hidden"
+        animate="show"
+        exit="exit"
+      >
         {items.map((item, idx) => (
-          <MenuItem
-            key={idx}
-            {...item}
-            speed={speed}
-            textColor={textColor}
-            marqueeBgColor={marqueeBgColor}
-            marqueeTextColor={marqueeTextColor}
-            borderColor={borderColor}
-            isFirst={idx === 0}
-          />
+          <motion.div
+            key={`${item.text}-${idx}`}
+            ref={(el) => {
+              rowRootsRef.current[idx] = el;
+            }}
+            className={cn(
+              "relative flex-1 overflow-hidden text-center",
+              idx === 0 && "rounded-t-xl",
+              idx === items.length - 1 && "rounded-b-xl",
+            )}
+            style={{
+              backgroundColor: bgColor,
+              borderTop: `1px solid ${borderColor}`,
+            }}
+            custom={idx}
+            variants={rowVariants}
+          >
+            <FlowingMenuRowInner
+              {...item}
+              speed={speed}
+              textColor={textColor}
+              marqueeBgColor={marqueeBgColor}
+              marqueeTextColor={marqueeTextColor}
+              borderColor={borderColor}
+              isFirst={idx === 0}
+              onNavigate={onNavigate}
+              rowRootsRef={rowRootsRef}
+              rowIndex={idx}
+            />
+          </motion.div>
         ))}
-      </nav>
+      </motion.nav>
     </div>
   );
 };
 
-const MenuItem: React.FC<MenuItemProps> = ({
+const FlowingMenuRowInner: React.FC<RowInnerProps> = ({
   link,
   text,
   image,
@@ -65,27 +179,39 @@ const MenuItem: React.FC<MenuItemProps> = ({
   textColor,
   marqueeBgColor,
   marqueeTextColor,
-  borderColor,
-  isFirst
+  borderColor: _borderColor,
+  isFirst: _isFirst,
+  onNavigate,
+  rowRootsRef,
+  rowIndex,
 }) => {
-  const itemRef = useRef<HTMLDivElement>(null);
   const marqueeRef = useRef<HTMLDivElement>(null);
   const marqueeInnerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<gsap.core.Tween | null>(null);
   const [repetitions, setRepetitions] = useState(4);
 
-  const animationDefaults = { duration: 0.6, ease: 'expo' };
+  const animationDefaults = { duration: 0.6, ease: "expo" };
 
-  const findClosestEdge = (mouseX: number, mouseY: number, width: number, height: number): 'top' | 'bottom' => {
+  const rowEl = () => rowRootsRef.current[rowIndex];
+
+  const findClosestEdge = (
+    mouseX: number,
+    mouseY: number,
+    width: number,
+    height: number,
+  ): "top" | "bottom" => {
     const topEdgeDist = Math.pow(mouseX - width / 2, 2) + Math.pow(mouseY, 2);
-    const bottomEdgeDist = Math.pow(mouseX - width / 2, 2) + Math.pow(mouseY - height, 2);
-    return topEdgeDist < bottomEdgeDist ? 'top' : 'bottom';
+    const bottomEdgeDist =
+      Math.pow(mouseX - width / 2, 2) + Math.pow(mouseY - height, 2);
+    return topEdgeDist < bottomEdgeDist ? "top" : "bottom";
   };
 
   useEffect(() => {
     const calculateRepetitions = () => {
       if (!marqueeInnerRef.current) return;
-      const marqueeContent = marqueeInnerRef.current.querySelector('.marquee-part') as HTMLElement;
+      const marqueeContent = marqueeInnerRef.current.querySelector(
+        ".marquee-part",
+      ) as HTMLElement;
       if (!marqueeContent) return;
       const contentWidth = marqueeContent.offsetWidth;
       const viewportWidth = window.innerWidth;
@@ -94,14 +220,16 @@ const MenuItem: React.FC<MenuItemProps> = ({
     };
 
     calculateRepetitions();
-    window.addEventListener('resize', calculateRepetitions);
-    return () => window.removeEventListener('resize', calculateRepetitions);
+    window.addEventListener("resize", calculateRepetitions);
+    return () => window.removeEventListener("resize", calculateRepetitions);
   }, [text, image]);
 
   useEffect(() => {
     const setupMarquee = () => {
       if (!marqueeInnerRef.current) return;
-      const marqueeContent = marqueeInnerRef.current.querySelector('.marquee-part') as HTMLElement;
+      const marqueeContent = marqueeInnerRef.current.querySelector(
+        ".marquee-part",
+      ) as HTMLElement;
       if (!marqueeContent) return;
       const contentWidth = marqueeContent.offsetWidth;
       if (contentWidth === 0) return;
@@ -113,8 +241,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
       animationRef.current = gsap.to(marqueeInnerRef.current, {
         x: -contentWidth,
         duration: speed,
-        ease: 'none',
-        repeat: -1
+        ease: "none",
+        repeat: -1,
       });
     };
 
@@ -128,61 +256,80 @@ const MenuItem: React.FC<MenuItemProps> = ({
   }, [text, image, repetitions, speed]);
 
   const handleMouseEnter = (ev: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!itemRef.current || !marqueeRef.current || !marqueeInnerRef.current) return;
-    const rect = itemRef.current.getBoundingClientRect();
-    const edge = findClosestEdge(ev.clientX - rect.left, ev.clientY - rect.top, rect.width, rect.height);
+    const el = rowEl();
+    if (!el || !marqueeRef.current || !marqueeInnerRef.current) return;
+    const rect = el.getBoundingClientRect();
+    const edge = findClosestEdge(
+      ev.clientX - rect.left,
+      ev.clientY - rect.top,
+      rect.width,
+      rect.height,
+    );
 
     gsap
       .timeline({ defaults: animationDefaults })
-      .set(marqueeRef.current, { y: edge === 'top' ? '-101%' : '101%' }, 0)
-      .set(marqueeInnerRef.current, { y: edge === 'top' ? '101%' : '-101%' }, 0)
-      .to([marqueeRef.current, marqueeInnerRef.current], { y: '0%' }, 0);
+      .set(marqueeRef.current, { y: edge === "top" ? "-101%" : "101%" }, 0)
+      .set(marqueeInnerRef.current, { y: edge === "top" ? "101%" : "-101%" }, 0)
+      .to([marqueeRef.current, marqueeInnerRef.current], { y: "0%" }, 0);
   };
 
   const handleMouseLeave = (ev: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!itemRef.current || !marqueeRef.current || !marqueeInnerRef.current) return;
-    const rect = itemRef.current.getBoundingClientRect();
-    const edge = findClosestEdge(ev.clientX - rect.left, ev.clientY - rect.top, rect.width, rect.height);
+    const el = rowEl();
+    if (!el || !marqueeRef.current || !marqueeInnerRef.current) return;
+    const rect = el.getBoundingClientRect();
+    const edge = findClosestEdge(
+      ev.clientX - rect.left,
+      ev.clientY - rect.top,
+      rect.width,
+      rect.height,
+    );
 
     gsap
       .timeline({ defaults: animationDefaults })
-      .to(marqueeRef.current, { y: edge === 'top' ? '-101%' : '101%' }, 0)
-      .to(marqueeInnerRef.current, { y: edge === 'top' ? '101%' : '-101%' }, 0);
+      .to(marqueeRef.current, { y: edge === "top" ? "-101%" : "101%" }, 0)
+      .to(
+        marqueeInnerRef.current,
+        { y: edge === "top" ? "101%" : "-101%" },
+        0,
+      );
   };
 
   return (
-    <div
-      className="flex-1 relative overflow-hidden text-center"
-      ref={itemRef}
-      style={{ borderTop: isFirst ? 'none' : `1px solid ${borderColor}` }}
-    >
+    <>
       <a
-        className="flex items-center justify-center h-full relative cursor-pointer uppercase no-underline font-semibold text-[4vh]"
+        className="relative flex h-full cursor-pointer items-center justify-center font-sans text-[4vh] font-bold uppercase no-underline"
         href={link}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onClick={() => onNavigate?.()}
         style={{ color: textColor }}
       >
         {text}
       </a>
       <div
-        className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none translate-y-[101%]"
+        className="pointer-events-none absolute top-0 left-0 h-full w-full translate-y-[101%] overflow-hidden"
         ref={marqueeRef}
         style={{ backgroundColor: marqueeBgColor }}
       >
-        <div className="h-full w-fit flex" ref={marqueeInnerRef}>
+        <div className="flex h-full w-fit" ref={marqueeInnerRef}>
           {[...Array(repetitions)].map((_, idx) => (
-            <div className="marquee-part flex items-center flex-shrink-0" key={idx} style={{ color: marqueeTextColor }}>
-              <span className="whitespace-nowrap uppercase font-normal text-[4vh] leading-[1] px-[1vw]">{text}</span>
+            <div
+              className="marquee-part flex shrink-0 items-center"
+              key={idx}
+              style={{ color: marqueeTextColor }}
+            >
+              <span className="px-[1vw] font-sans text-[4vh] leading-none font-bold whitespace-nowrap uppercase">
+                {text}
+              </span>
               <div
-                className="w-[200px] h-[7vh] my-[2em] mx-[2vw] py-[1em] rounded-[50px] bg-cover bg-center"
+                className="mx-[2vw] my-[2em] h-[7vh] w-[200px] rounded-[50px] bg-cover bg-center py-[1em]"
                 style={{ backgroundImage: `url(${image})` }}
               />
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -13,5 +13,28 @@ export const siteConfig = {
     "Developer & designer — building digital products, interfaces, and brands.",
   /** Pill navbar (uppercase strip) */
   navTagline: "DESIGNING AND DEVELOPING DIGITAL PRODUCTS",
+  /** Flowing menu rows (placeholders use picsum like the FlowingMenu demo) */
+  navMenuItems: [
+    {
+      text: "LinkedIn",
+      link: "#",
+      image: "https://picsum.photos/600/400?random=1",
+    },
+    {
+      text: "Github",
+      link: "#",
+      image: "https://picsum.photos/600/400?random=2",
+    },
+    {
+      text: "Twitter",
+      link: "#",
+      image: "https://picsum.photos/600/400?random=3",
+    },
+    {
+      text: "Instagram",
+      link: "#",
+      image: "https://picsum.photos/600/400?random=4",
+    },
+  ],
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
 } as const;
