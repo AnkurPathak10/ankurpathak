@@ -102,8 +102,6 @@ interface RowInnerProps extends MenuItemData {
   textColor: string;
   marqueeBgColor: string;
   marqueeTextColor: string;
-  borderColor: string;
-  isFirst: boolean;
   onNavigate?: () => void;
   /** Mutable list of row roots; same index as this row’s `motion.div`. */
   rowRootsRef: React.MutableRefObject<(HTMLDivElement | null)[]>;
@@ -123,7 +121,6 @@ const FlowingMenu: React.FC<FlowingMenuProps> = ({
 }) => {
   const rowVariants = useMemo(() => createRowVariants(items.length), [items.length]);
   const rowRootsRef = useRef<(HTMLDivElement | null)[]>([]);
-  rowRootsRef.current.length = items.length;
 
   return (
     <div className={cn("h-full w-full overflow-hidden bg-transparent", className)}>
@@ -158,8 +155,6 @@ const FlowingMenu: React.FC<FlowingMenuProps> = ({
               textColor={textColor}
               marqueeBgColor={marqueeBgColor}
               marqueeTextColor={marqueeTextColor}
-              borderColor={borderColor}
-              isFirst={idx === 0}
               onNavigate={onNavigate}
               rowRootsRef={rowRootsRef}
               rowIndex={idx}
@@ -179,8 +174,6 @@ const FlowingMenuRowInner: React.FC<RowInnerProps> = ({
   textColor,
   marqueeBgColor,
   marqueeTextColor,
-  borderColor: _borderColor,
-  isFirst: _isFirst,
   onNavigate,
   rowRootsRef,
   rowIndex,
