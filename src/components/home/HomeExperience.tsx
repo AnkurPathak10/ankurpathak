@@ -1,8 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
 
+import Galaxy from "@/components/Galaxy";
 import { Hero } from "@/components/hero/Hero";
 import { HeroNavbar } from "@/components/hero/HeroNavbar";
 import { useSiteAppearanceIsDark } from "@/hooks/use-site-appearance-is-dark";
@@ -17,6 +18,20 @@ const COVER_DISTANCE_VH = 100;
 
 /** Black About panel height as a fraction of the viewport (75–80% → ~78%). */
 const ABOUT_PANEL_HEIGHT_VH = 83;
+
+/** Tailwind `lg` breakpoint = 64rem. Used to swap mobile galaxy card for the section-level backdrop. */
+function useIsLgUp(): boolean {
+  const [isLg, setIsLg] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(min-width: 64rem)");
+    const update = () => setIsLg(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+  return isLg;
+}
 
 /** Spring that follows scroll-driven target — keeps gliding after wheel stops (reference-style inertia). */
 function useAboutSheetSpringY(
@@ -76,6 +91,7 @@ export function HomeExperience() {
   const reduceMotion = useReducedMotion() ?? false;
 
   const aboutSpringY = useAboutSheetSpringY(scrollRootRef, reduceMotion);
+  const isLgUp = useIsLgUp();
 
   const aboutSurface = siteDark
     ? "bg-[#f5f5f5] text-neutral-950"
@@ -111,17 +127,80 @@ export function HomeExperience() {
           >
             <section
               className={cn(
-                "relative flex min-h-0 shrink-0 flex-col overflow-y-auto rounded-t-[2rem] px-5 pt-8 pb-12 sm:rounded-t-[2.5rem] sm:px-8 sm:pt-10 sm:pb-16",
+                "relative isolate flex shrink-0 flex-col overflow-hidden rounded-t-[2rem] px-5 pt-8 pb-12 sm:rounded-t-[2.5rem] sm:px-8 sm:pt-10 sm:pb-16",
                 aboutSurface,
               )}
               style={{ height: `${ABOUT_PANEL_HEIGHT_VH}svh` }}
               aria-labelledby="about-heading"
             >
-              <div className="mx-auto grid min-h-0 w-full max-w-352 flex-1 grid-cols-1 items-stretch gap-10 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:gap-x-10 lg:gap-y-0 xl:gap-x-14">
-                <div className="flex min-h-0 flex-col justify-center">
+              {/* lg+ Galaxy backdrop — section-level so it spans true panel edges (top, bottom, left)
+                   and bleeds slightly past the column boundary on the right via right: 58%. */}
+              {isLgUp ? (
+                <div
+                  aria-hidden
+                  className="pointer-events-auto absolute inset-0 z-0"
+                  style={{ right: "58%" }}
+                >
+                  <Galaxy
+                    mouseRepulsion
+                    mouseInteraction
+                    density={1}
+                    glowIntensity={0.3}
+                    saturation={0}
+                    hueShift={140}
+                    twinkleIntensity={0.3}
+                    rotationSpeed={0.1}
+                    repulsionStrength={2}
+                    autoCenterRepulsion={0}
+                    starSpeed={0.5}
+                    speed={1}
+                    transparent
+                  />
+                </div>
+              ) : null}
+
+              <div
+                className={cn(
+                  "relative z-10 mx-auto grid w-full max-w-352 grid-cols-1 items-stretch gap-10",
+                  "lg:h-full lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:gap-x-10 lg:gap-y-0 xl:gap-x-14",
+                )}
+              >
+                <div
+                  className={cn(
+                    "relative isolate flex w-full flex-col justify-center overflow-hidden",
+                    "max-lg:min-h-[min(50vh,28rem)] sm:max-lg:min-h-[min(45vh,32rem)]",
+                    "max-lg:rounded-2xl",
+                    /* lg+ heading column is just a layout slot for the heading; Galaxy lives at section level */
+                  )}
+                >
+                  {/* Mobile-only Galaxy card behind heading (lg+ uses section-level Galaxy above) */}
+                  {!isLgUp ? (
+                    <div className="pointer-events-auto absolute inset-0 z-0">
+                      <Galaxy
+                        mouseRepulsion
+                        mouseInteraction
+                        density={1}
+                        glowIntensity={0.3}
+                        saturation={0}
+                        hueShift={140}
+                        twinkleIntensity={0.3}
+                        rotationSpeed={0.1}
+                        repulsionStrength={2}
+                        autoCenterRepulsion={0}
+                        starSpeed={0.5}
+                        speed={1}
+                        transparent
+                      />
+                    </div>
+                  ) : null}
                   <h2
                     id="about-heading"
-                    className="font-sans font-black leading-[0.88] tracking-[-0.02em]"
+                    className={cn(
+                      "relative z-10 pr-1 pl-5 font-sans font-black leading-[0.88] tracking-[-0.02em] pointer-events-none sm:pl-8",
+                      siteDark
+                        ? "drop-shadow-[0_1px_10px_rgba(0,0,0,0.18)]"
+                        : "drop-shadow-[0_2px_28px_rgba(0,0,0,0.88)]",
+                    )}
                     style={{
                       fontSize: "clamp(3.75rem, 11vw, 9.5rem)",
                     }}
@@ -130,7 +209,7 @@ export function HomeExperience() {
                     <span className="block">{siteConfig.aboutHeadingLine2}</span>
                   </h2>
                 </div>
-                <div className="flex min-h-0 w-full flex-col justify-center gap-8 lg:gap-10 lg:py-4">
+                <div className="relative z-10 flex w-full flex-col justify-center gap-8 lg:gap-10 lg:py-4">
                   <p
                     className="w-full max-w-none font-sans font-normal text-balance"
                     style={{
