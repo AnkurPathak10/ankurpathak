@@ -118,7 +118,7 @@ export function HeroNavbar() {
         {menuOpen ? (
           <motion.div
             key="menu-overlay"
-            className="pointer-events-none fixed inset-0 z-[80]"
+            className="pointer-events-none fixed inset-0 z-200"
             variants={{
               visible: {},
               exit: {
@@ -131,7 +131,7 @@ export function HeroNavbar() {
           >
             <motion.div
               key="menu-backdrop"
-              className="pointer-events-auto fixed inset-0 z-[90] cursor-default"
+              className="pointer-events-auto fixed inset-0 z-[210] cursor-default"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{
@@ -148,7 +148,7 @@ export function HeroNavbar() {
               key="menu-panel"
               id="site-flowing-nav"
               className={cn(
-                "pointer-events-auto fixed z-[100] rounded-xl shadow-lg",
+                "pointer-events-auto fixed z-[220] rounded-xl shadow-lg",
                 "top-2 right-3 left-3 sm:top-2.5 sm:right-4 sm:left-4 md:right-5 md:left-5",
                 "h-[600px] max-h-[min(600px,calc(100svh-1.5rem))]",
               )}
@@ -187,7 +187,7 @@ export function HeroNavbar() {
                 type="button"
                 ref={closeButtonRef}
                 className={cn(
-                  "pointer-events-auto fixed z-[110] flex cursor-pointer items-center justify-center rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-offset-2",
+                  "pointer-events-auto fixed z-[230] flex cursor-pointer items-center justify-center rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-offset-2",
                   siteIsDark
                     ? "focus-visible:ring-black focus-visible:ring-offset-white"
                     : "focus-visible:ring-white focus-visible:ring-offset-black",
@@ -227,7 +227,7 @@ export function HeroNavbar() {
 
   return (
     <>
-      <header className="pointer-events-auto fixed top-2 right-0 left-0 z-50 flex justify-center px-3 sm:top-2.5 sm:px-4 md:px-5">
+      <header className="pointer-events-auto fixed top-2 right-0 left-0 z-[100] flex justify-center px-3 sm:top-2.5 sm:px-4 md:px-5">
         <nav
           className="flex w-full items-center justify-between gap-2.5 overflow-visible rounded-xl border border-border bg-background/95 px-3 py-2 shadow-sm backdrop-blur-md sm:gap-3 sm:px-4 sm:py-2.5 md:px-5"
           aria-label="Primary"

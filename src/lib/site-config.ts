@@ -37,4 +37,12 @@ export const siteConfig = {
     },
   ],
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  /** About section — scroll-reveal panel */
+  aboutHeadingLine1: "About",
+  aboutHeadingLine2: "Me ?",
+  aboutName: "Ankur",
+  aboutPronouns: "(HE/HIM)",
+  aboutLeadBody:
+    "is a full stack web developer and web designer, passionate in creating modern frontend designs and efficient backend architectures. He uses Next.js + TypeScript as primary tools to give life to one-of-a-kind stunning products. He is creating bugs since 2024 and currently resides in India, and he is ready to take on any product development challenge globally.",
+  aboutTagline: "BUILDING PRODUCTS OF SOFTWARE - AI - SAAS",
 } as const;

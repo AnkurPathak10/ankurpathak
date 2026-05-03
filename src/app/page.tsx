@@ -1,9 +1,9 @@
-import { Hero } from "@/components/hero/Hero";
+import { HomeExperience } from "@/components/home/HomeExperience";
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
-      <Hero />
+    <main className="min-h-0 bg-transparent">
+      <HomeExperience />
     </main>
   );
 }

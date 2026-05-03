@@ -2,11 +2,16 @@ import type { Metadata, Viewport } from "next";
 import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 import { Noto_Sans, Playfair_Display } from "next/font/google";
+import { SmoothScroll } from "@/components/SmoothScroll";
 import { cn } from "@/lib/utils";
 
 const playfairDisplayHeading = Playfair_Display({subsets:['latin'],variable:'--font-heading'});
 
-const notoSans = Noto_Sans({subsets:['latin'],variable:'--font-sans'});
+const notoSans = Noto_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -75,7 +80,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {children}
+        <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>
   );
